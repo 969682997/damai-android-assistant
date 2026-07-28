@@ -42,6 +42,18 @@ class AccessibilityServiceMatcherTest {
     }
 
     @Test
+    fun recognizesResolvedServiceIdentity() {
+        assertTrue(
+            AccessibilityServiceMatcher.isExpectedService(
+                servicePackageName = "COM.EXAMPLE.DAMAIASSISTANT",
+                serviceClassName = "com.example.damaiassistant.service.DamaiAccessibilityService",
+                expectedPackageName = expectedPackage,
+                expectedClassName = expectedClass
+            )
+        )
+    }
+
+    @Test
     fun rejectsDifferentServiceFromSamePackage() {
         assertFalse(
             AccessibilityServiceMatcher.isEnabled(

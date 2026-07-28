@@ -1,6 +1,26 @@
 package com.example.damaiassistant.permission
 
 object AccessibilityServiceMatcher {
+    fun isExpectedService(
+        servicePackageName: String?,
+        serviceClassName: String?,
+        expectedPackageName: String,
+        expectedClassName: String
+    ): Boolean {
+        val packageName = servicePackageName?.trim().orEmpty()
+        val classNamePart = serviceClassName?.trim().orEmpty()
+        if (packageName.isEmpty() || classNamePart.isEmpty()) return false
+
+        val className = when {
+            classNamePart.startsWith('.') -> packageName + classNamePart
+            classNamePart.startsWith("$packageName.", ignoreCase = true) -> classNamePart
+            else -> "$packageName.$classNamePart"
+        }
+
+        return packageName.equals(expectedPackageName, ignoreCase = true) &&
+            className.equals(expectedClassName, ignoreCase = true)
+    }
+
     fun isEnabled(
         enabledServices: String?,
         expectedPackageName: String,

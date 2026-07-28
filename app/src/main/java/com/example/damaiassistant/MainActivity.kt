@@ -55,6 +55,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshPermissions()
+        window.decorView.postDelayed({
+            if (!isFinishing) refreshPermissions()
+        }, 800L)
     }
 
     private fun refreshPermissions() {

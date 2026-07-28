@@ -1,14 +1,14 @@
 package com.example.damaiassistant.permission
 
-import android.app.AlarmManager
 import android.accessibilityservice.AccessibilityServiceInfo
-import android.view.accessibility.AccessibilityManager
+import android.app.AlarmManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
 import com.example.damaiassistant.service.DamaiAccessibilityService
 
 data class PermissionStatus(
@@ -61,7 +61,13 @@ object PermissionCoordinator {
         val managerMatch = context.getSystemService(AccessibilityManager::class.java)
             ?.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
             ?.any { serviceInfo ->
-                AccessibilityServiceMatcher.isEnabled(
+                val resolvedService = serviceInfo.resolveInfo?.serviceInfo
+                AccessibilityServiceMatcher.isExpectedService(
+                    servicePackageName = resolvedService?.packageName,
+                    serviceClassName = resolvedService?.name,
+                    expectedPackageName = expectedPackageName,
+                    expectedClassName = expectedClassName
+                ) || AccessibilityServiceMatcher.isEnabled(
                     enabledServices = serviceInfo.id,
                     expectedPackageName = expectedPackageName,
                     expectedClassName = expectedClassName
