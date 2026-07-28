@@ -9,6 +9,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.example.damaiassistant.permission.DamaiPackageResolver
 import com.example.damaiassistant.permission.PermissionCoordinator
 import com.example.damaiassistant.service.TaskRunnerService
 import com.example.damaiassistant.data.SharedPreferencesStore
@@ -16,12 +17,14 @@ import com.example.damaiassistant.data.TaskRepository
 
 class MainActivity : AppCompatActivity() {
     private lateinit var permissionText: TextView
+    private lateinit var damaiStatusText: TextView
     private lateinit var startButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         permissionText = findViewById(R.id.permissionText)
+        damaiStatusText = findViewById(R.id.damaiStatusText)
         startButton = findViewById(R.id.startTaskButton)
         findViewById<Button>(R.id.accessibilityButton).setOnClickListener {
             PermissionCoordinator.openAccessibilitySettings(this)
@@ -39,7 +42,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, TaskEditorActivity::class.java))
         }
         findViewById<Button>(R.id.openDamaiButton).setOnClickListener {
-            packageManager.getLaunchIntentForPackage("cn.damai")?.let(::startActivity)
+            DamaiPackageResolver.launchIntent(this)?.let(::startActivity)
                 ?: Toast.makeText(this, "未安装大麦 App", Toast.LENGTH_SHORT).show()
         }
         startButton.setOnClickListener { startTask() }
@@ -62,6 +65,13 @@ class MainActivity : AppCompatActivity() {
             append("\n通知：").append(if (status.notificationsGranted) "已授权" else "未授权")
             append("\n精确定时：").append(if (status.exactAlarmGranted) "已授权" else "未授权")
         }
+        val damaiPackage = DamaiPackageResolver.resolve(this)
+        damaiStatusText.text = if (damaiPackage == null) {
+            "大麦：未检测到可启动的大麦 App"
+        } else {
+            "大麦：已检测（$damaiPackage）"
+        }
+        findViewById<Button>(R.id.openDamaiButton).isEnabled = damaiPackage != null
         startButton.isEnabled = status.allGranted
     }
 

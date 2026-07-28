@@ -11,6 +11,7 @@ import com.example.damaiassistant.data.TaskRepository
 import com.example.damaiassistant.domain.PurchaseStateMachine
 import com.example.damaiassistant.domain.PurchaseState
 import com.example.damaiassistant.notify.HumanHandoffNotifier
+import com.example.damaiassistant.permission.DamaiPackageResolver
 
 class DamaiAccessibilityService : AccessibilityService() {
     private val snapshotter = NodeSnapshotter()
@@ -20,6 +21,7 @@ class DamaiAccessibilityService : AccessibilityService() {
     private lateinit var eventLog: LocalEventLog
     private lateinit var notifier: HumanHandoffNotifier
     private var lastNoticeState: PurchaseState? = null
+    private var damaiPackageName: String? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -27,10 +29,15 @@ class DamaiAccessibilityService : AccessibilityService() {
         repository = TaskRepository(store)
         eventLog = LocalEventLog(store)
         notifier = HumanHandoffNotifier(this)
+        damaiPackageName = DamaiPackageResolver.resolve(this)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        if (event?.packageName?.toString() != DAMAI_PACKAGE) return
+        val eventPackageName = event?.packageName?.toString()
+        if (!DamaiPackageResolver.isDamaiPackage(eventPackageName, damaiPackageName)) return
+        if (damaiPackageName == null) {
+            damaiPackageName = eventPackageName
+        }
         val task = repository.load()?.takeIf { it.enabled } ?: return
         val root = rootInActiveWindow ?: return
         val snapshot = snapshotter.snapshot(root) ?: return
@@ -65,7 +72,6 @@ class DamaiAccessibilityService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     companion object {
-        const val DAMAI_PACKAGE = "cn.damai"
         private const val PREFERENCES_NAME = "damai_assistant"
     }
 }

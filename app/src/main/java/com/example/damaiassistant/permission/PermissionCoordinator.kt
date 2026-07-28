@@ -1,6 +1,8 @@
 package com.example.damaiassistant.permission
 
 import android.app.AlarmManager
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.view.accessibility.AccessibilityManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -54,11 +56,27 @@ object PermissionCoordinator {
 
     private fun isAccessibilityEnabled(context: Context): Boolean {
         val expected = ComponentName(context, DamaiAccessibilityService::class.java).flattenToString()
+        val expectedPackageName = expected.substringBefore('/')
+        val expectedClassName = expected.substringAfter('/')
+        val managerMatch = context.getSystemService(AccessibilityManager::class.java)
+            ?.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+            ?.any { serviceInfo ->
+                AccessibilityServiceMatcher.isEnabled(
+                    enabledServices = serviceInfo.id,
+                    expectedPackageName = expectedPackageName,
+                    expectedClassName = expectedClassName
+                )
+            } == true
+        if (managerMatch) return true
+
         val enabled = Settings.Secure.getString(
             context.contentResolver,
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
         ) ?: return false
-        return enabled.split(':').any { it.equals(expected, ignoreCase = true) }
+        return AccessibilityServiceMatcher.isEnabled(
+            enabledServices = enabled,
+            expectedPackageName = expectedPackageName,
+            expectedClassName = expectedClassName
+        )
     }
 }
-

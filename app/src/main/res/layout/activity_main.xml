@@ -36,6 +36,15 @@
             android:textColor="@color/text_primary"
             android:textSize="14sp" />
 
+        <TextView
+            android:id="@+id/damaiStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="大麦：检测中"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+
         <Button
             android:id="@+id/accessibilityButton"
             android:layout_width="match_parent"
