@@ -23,7 +23,9 @@ object DamaiPageReader {
             kind = classify(allText, ticketTiers, viewers),
             texts = texts,
             ticketTiers = ticketTiers,
-            viewers = viewers
+            viewers = viewers,
+            quantityControlKey = readActionKey(indexedNodes, QUANTITY_KEYWORDS),
+            submitControlKey = readActionKey(indexedNodes, SUBMIT_KEYWORDS)
         )
     }
 
@@ -132,6 +134,18 @@ object DamaiPageReader {
 
     private fun containsAny(text: String, keywords: List<String>): Boolean = keywords.any(text::contains)
 
+    private fun readActionKey(nodes: List<IndexedNode>, keywords: List<String>): String? =
+        nodes.asSequence()
+            .map { it.node }
+            .filter { it.clickable && it.enabled }
+            .mapNotNull { node ->
+                val visibleText = listOfNotNull(node.text, node.contentDescription).firstOrNull { text ->
+                    keywords.any(text::contains)
+                }
+                visibleText?.let { node.contentDescription ?: it }
+            }
+            .firstOrNull()
+
     private data class IndexedNode(val node: UiNodeSnapshot, val path: String)
 
     private val PRICE_PATTERN = Regex("(?:¥|￥|rmb|人民币)?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)", RegexOption.IGNORE_CASE)
@@ -144,4 +158,6 @@ object DamaiPageReader {
     private val QUEUE_KEYWORDS = listOf("排队中", "排队", "队列")
     private val LOGIN_KEYWORDS = listOf("请登录", "登录失效", "重新登录")
     private val APPOINTMENT_KEYWORDS = listOf("预约", "预约成功")
+    private val QUANTITY_KEYWORDS = listOf("数量", "加一张", "减一张")
+    private val SUBMIT_KEYWORDS = listOf("提交订单", "确认订单", "立即购买")
 }

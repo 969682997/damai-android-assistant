@@ -8,8 +8,9 @@ class UiActionExecutor {
         if (root == null) return false
         return when (action) {
             is PageAction.SelectTicketTier -> clickByKey(root, action.stableKey)
+            is PageAction.SelectQuantity -> clickByKey(root, action.stableKey)
             is PageAction.SelectViewers -> action.stableKeys.all { clickByKey(root, it) }
-            is PageAction.SelectQuantity -> false
+            is PageAction.SubmitOrder -> clickByKey(root, action.stableKey)
         }
     }
 
@@ -28,4 +29,3 @@ class UiActionExecutor {
             .firstOrNull()
     }
 }
-

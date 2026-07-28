@@ -13,7 +13,8 @@ enum class HandoffReason {
     TicketAmbiguous,
     ViewerMissing,
     ViewerAmbiguous,
-    ViewerCountMismatch
+    ViewerCountMismatch,
+    ActionUnavailable
 }
 
 sealed interface PageClassification {
@@ -40,4 +41,3 @@ object PageStateClassifier {
         VisiblePageKind.Unknown -> PageClassification.UnknownPage
     }
 }
-

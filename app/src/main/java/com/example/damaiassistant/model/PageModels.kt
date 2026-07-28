@@ -50,5 +50,7 @@ data class VisiblePage(
     val kind: VisiblePageKind,
     val texts: List<String>,
     val ticketTiers: List<VisibleTicketTier> = emptyList(),
-    val viewers: List<VisibleViewer> = emptyList()
+    val viewers: List<VisibleViewer> = emptyList(),
+    val quantityControlKey: String? = null,
+    val submitControlKey: String? = null
 )

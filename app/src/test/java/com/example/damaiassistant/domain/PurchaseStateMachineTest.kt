@@ -63,6 +63,46 @@ class PurchaseStateMachineTest {
         assertTrue(stopped.state == PurchaseState.StoppedAtPayment)
     }
 
+    @Test
+    fun selectsQuantityThenViewersAndSubmitsOnlyWhenControlsAreExplicit() {
+        val machine = PurchaseStateMachine(task())
+        machine.start(nowEpochMs = 2_000L)
+        machine.onPage(ticketPage())
+
+        val quantity = machine.onPage(ticketPage(quantityControlKey = "quantity-control"))
+        assertEquals(PurchaseState.SelectingViewers, quantity.state)
+        assertEquals(PageAction.SelectQuantity("quantity-control", 1), quantity.action)
+
+        val viewers = machine.onPage(
+            VisiblePage(
+                kind = VisiblePageKind.ViewerSelection,
+                texts = listOf("观演人"),
+                viewers = listOf(com.example.damaiassistant.model.VisibleViewer("观演人 A", "viewer-a"))
+            )
+        )
+        assertEquals(PageAction.SelectViewers(listOf("viewer-a")), viewers.action)
+
+        val submit = machine.onPage(
+            VisiblePage(
+                kind = VisiblePageKind.ViewerSelection,
+                texts = listOf("观演人", "提交订单"),
+                viewers = listOf(
+                    com.example.damaiassistant.model.VisibleViewer("观演人 A", "viewer-a", selected = true)
+                ),
+                submitControlKey = "submit-control"
+            )
+        )
+        assertEquals(PurchaseState.Submitting, submit.state)
+        assertEquals(PageAction.SubmitOrder("submit-control"), submit.action)
+    }
+
+    private fun ticketPage(quantityControlKey: String? = null) = VisiblePage(
+        kind = VisiblePageKind.TicketSelection,
+        texts = listOf("票档"),
+        ticketTiers = listOf(VisibleTicketTier("内场", 128000, true, "tier-inner")),
+        quantityControlKey = quantityControlKey
+    )
+
     private fun task() = TaskConfig(
         eventName = "目标演出",
         performanceName = "周六 19:30",
@@ -72,4 +112,3 @@ class PurchaseStateMachineTest {
         ticketPreferences = listOf(TicketPreference("内场", 128000, 0))
     )
 }
-

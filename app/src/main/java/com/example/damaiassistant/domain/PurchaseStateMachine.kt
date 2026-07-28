@@ -19,8 +19,9 @@ enum class PurchaseState {
 
 sealed interface PageAction {
     data class SelectTicketTier(val stableKey: String) : PageAction
-    data class SelectQuantity(val count: Int) : PageAction
+    data class SelectQuantity(val stableKey: String, val count: Int) : PageAction
     data class SelectViewers(val stableKeys: List<String>) : PageAction
+    data class SubmitOrder(val stableKey: String) : PageAction
 }
 
 data class StateDecision(
@@ -90,6 +91,15 @@ class PurchaseStateMachine(
     }
 
     private fun handleTicketPage(page: VisiblePage): StateDecision {
+        if (state == PurchaseState.SelectingQuantity) {
+            val key = page.quantityControlKey
+            if (key == null) {
+                state = PurchaseState.HumanHandoff
+                return decision(handoffReason = HandoffReason.ActionUnavailable)
+            }
+            state = PurchaseState.SelectingViewers
+            return decision(PageAction.SelectQuantity(key, task.ticketCount))
+        }
         val result = TicketMatcher.select(task.ticketPreferences, page.ticketTiers)
         return when (result) {
             is TicketMatchResult.Selected -> {
@@ -108,11 +118,20 @@ class PurchaseStateMachine(
     }
 
     private fun stateDecisionForViewerPage(page: VisiblePage): StateDecision {
-        return when (val result = ViewerSelector.select(
+        val result = ViewerSelector.select(
             ticketCount = task.ticketCount,
             selectedViewerNames = task.viewers.map { it.displayName },
             visibleViewers = page.viewers
-        )) {
+        )
+        if (state == PurchaseState.SelectingViewers &&
+            result is ViewerSelectionResult.Selected &&
+            result.viewers.all { it.selected } &&
+            page.submitControlKey != null
+        ) {
+            state = PurchaseState.Submitting
+            return decision(PageAction.SubmitOrder(page.submitControlKey))
+        }
+        return when (result) {
             is ViewerSelectionResult.Selected -> {
                 state = PurchaseState.SelectingViewers
                 decision(PageAction.SelectViewers(result.viewers.map { it.stableKey }))
