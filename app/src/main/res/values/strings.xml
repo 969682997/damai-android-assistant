@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">大麦助手</string>
+    <string name="accessibility_service_label">大麦助手页面辅助服务</string>
+    <string name="accessibility_service_description">读取当前大麦页面的可见控件并执行用户确认的任务操作。</string>
+    <string name="notification_channel_name">任务运行状态</string>
+    <string name="runner_notification_title">大麦助手任务运行中</string>
+    <string name="runner_notification_text">等待开售或处理可见页面，请保留人工接管能力。</string>
+    <string name="handoff_notification_title">大麦助手需要人工处理</string>
+    <string name="handoff_notification_text">检测到人机校验、验证或页面异常，请在大麦中手动处理。</string>
+    <string name="payment_notification_title">已到付款页面</string>
+    <string name="payment_notification_text">自动操作已停止，请手动确认订单和完成支付。</string>
+</resources>
