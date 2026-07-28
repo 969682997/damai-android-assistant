@@ -54,11 +54,16 @@ class PurchaseStateMachine(
         if (state == PurchaseState.StoppedAtPayment || state == PurchaseState.StoppedByUser) {
             return decision()
         }
-        if (state == PurchaseState.WaitingForRelease && page.kind != com.example.damaiassistant.model.VisiblePageKind.Appointment) {
+        val classification = PageStateClassifier.classify(page)
+        if (state == PurchaseState.WaitingForRelease &&
+            classification != PageClassification.PaymentPage &&
+            classification !is PageClassification.HumanHandoff &&
+            classification != PageClassification.AppointmentPage
+        ) {
             return decision()
         }
 
-        return when (val classification = PageStateClassifier.classify(page)) {
+        return when (classification) {
             PageClassification.PaymentPage -> {
                 state = PurchaseState.StoppedAtPayment
                 decision()

@@ -64,6 +64,23 @@ class PurchaseStateMachineTest {
     }
 
     @Test
+    fun paymentAndHumanChecksOverrideTheWaitingGate() {
+        val paymentMachine = PurchaseStateMachine(task())
+        paymentMachine.start(nowEpochMs = 1_000L)
+        assertEquals(
+            PurchaseState.StoppedAtPayment,
+            paymentMachine.onPage(VisiblePage(VisiblePageKind.Payment, listOf("付款"))).state
+        )
+
+        val handoffMachine = PurchaseStateMachine(task())
+        handoffMachine.start(nowEpochMs = 1_000L)
+        assertEquals(
+            PurchaseState.HumanHandoff,
+            handoffMachine.onPage(VisiblePage(VisiblePageKind.HumanVerification, listOf("验证码"))).state
+        )
+    }
+
+    @Test
     fun selectsQuantityThenViewersAndSubmitsOnlyWhenControlsAreExplicit() {
         val machine = PurchaseStateMachine(task())
         machine.start(nowEpochMs = 2_000L)
