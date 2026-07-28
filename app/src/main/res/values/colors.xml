@@ -3,4 +3,6 @@
     <color name="brand_blue">#1565C0</color>
     <color name="surface_background">#F7F9FC</color>
     <color name="text_primary">#182230</color>
+    <color name="text_secondary">#5E6B7A</color>
+    <color name="text_hint">#9AA5B1</color>
 </resources>

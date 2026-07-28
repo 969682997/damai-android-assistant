@@ -3,9 +3,11 @@ package com.example.damaiassistant.service
 import android.accessibilityservice.AccessibilityService
 import android.view.accessibility.AccessibilityEvent
 import com.example.damaiassistant.accessibility.DamaiPageReader
+import com.example.damaiassistant.accessibility.DamaiTaskDraftParser
 import com.example.damaiassistant.accessibility.NodeSnapshotter
 import com.example.damaiassistant.accessibility.UiActionExecutor
 import com.example.damaiassistant.data.LocalEventLog
+import com.example.damaiassistant.data.LatestDamaiPageStore
 import com.example.damaiassistant.data.SharedPreferencesStore
 import com.example.damaiassistant.data.TaskRepository
 import com.example.damaiassistant.domain.PurchaseStateMachine
@@ -20,8 +22,10 @@ class DamaiAccessibilityService : AccessibilityService() {
     private lateinit var repository: TaskRepository
     private lateinit var eventLog: LocalEventLog
     private lateinit var notifier: HumanHandoffNotifier
+    private lateinit var latestPageStore: LatestDamaiPageStore
     private var lastNoticeState: PurchaseState? = null
     private var damaiPackageName: String? = null
+    private var lastDraftSignature: String? = null
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -29,6 +33,7 @@ class DamaiAccessibilityService : AccessibilityService() {
         repository = TaskRepository(store)
         eventLog = LocalEventLog(store)
         notifier = HumanHandoffNotifier(this)
+        latestPageStore = LatestDamaiPageStore(store)
         damaiPackageName = DamaiPackageResolver.resolve(this)
     }
 
@@ -38,10 +43,17 @@ class DamaiAccessibilityService : AccessibilityService() {
         if (damaiPackageName == null) {
             damaiPackageName = eventPackageName
         }
-        val task = repository.load()?.takeIf { it.enabled } ?: return
         val root = rootInActiveWindow ?: return
         val snapshot = snapshotter.snapshot(root) ?: return
         val page = DamaiPageReader.read(snapshot)
+        val capturedAtEpochMs = System.currentTimeMillis()
+        val draft = DamaiTaskDraftParser.parse(page, capturedAtEpochMs)
+        val draftSignature = draft.copy(capturedAtEpochMs = 0L).toString()
+        if (draftSignature != lastDraftSignature && draftHasData(draft)) {
+            latestPageStore.save(draft)
+            lastDraftSignature = draftSignature
+        }
+        val task = repository.load()?.takeIf { it.enabled } ?: return
         val machine = stateMachine ?: PurchaseStateMachine(task).also {
             it.start(System.currentTimeMillis())
             stateMachine = it
@@ -70,6 +82,13 @@ class DamaiAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() = Unit
+
+    private fun draftHasData(draft: com.example.damaiassistant.model.DamaiTaskDraft): Boolean =
+        draft.eventName != null ||
+            draft.performanceName != null ||
+            draft.releaseAtEpochMs != null ||
+            draft.ticketPreferences.isNotEmpty() ||
+            draft.viewers.isNotEmpty()
 
     companion object {
         private const val PREFERENCES_NAME = "damai_assistant"
