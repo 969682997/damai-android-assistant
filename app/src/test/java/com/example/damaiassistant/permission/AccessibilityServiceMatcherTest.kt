@@ -20,6 +20,17 @@ class AccessibilityServiceMatcherTest {
     }
 
     @Test
+    fun recognizesPackageRelativeClassWithoutLeadingDot() {
+        assertTrue(
+            AccessibilityServiceMatcher.isEnabled(
+                "com.example.damaiassistant/service.DamaiAccessibilityService",
+                expectedPackage,
+                expectedClass
+            )
+        )
+    }
+
+    @Test
     fun recognizesFullyQualifiedComponentName() {
         assertTrue(
             AccessibilityServiceMatcher.isEnabled(

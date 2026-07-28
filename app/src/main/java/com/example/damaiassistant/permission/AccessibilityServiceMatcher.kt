@@ -28,7 +28,8 @@ object AccessibilityServiceMatcher {
         val classNamePart = component.substring(separatorIndex + 1).trim()
         val className = when {
             classNamePart.startsWith('.') -> packageName + classNamePart
-            classNamePart.contains('.') -> classNamePart
+            classNamePart.startsWith("$packageName.", ignoreCase = true) -> classNamePart
+            classNamePart.contains('.') -> "$packageName.$classNamePart"
             else -> "$packageName.$classNamePart"
         }
 
